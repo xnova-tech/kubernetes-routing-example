@@ -1,0 +1,20 @@
+[project]
+name = "kubernetes-routing-example"
+version = "0.1.0"
+description = "Typed Kubernetes Deployment, Service and Ingress contract from XNova"
+requires-python = ">=3.12,<3.13"
+dependencies = ["PyYAML==6.0.3"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C90", "ARG", "PTH", "T20"]
+
+[tool.ruff.lint.per-file-ignores]
+"article_demo.py" = ["T201"]

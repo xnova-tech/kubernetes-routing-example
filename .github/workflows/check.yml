@@ -1,0 +1,47 @@
+name: Check Kubernetes routing example
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            requirements-test.txt
+            requirements-dev.txt
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements-test.txt -r requirements-dev.txt
+      - name: Check formatting and lint
+        run: |
+          python -m ruff format --check .
+          python -m ruff check .
+      - name: Run contract tests
+        run: python -m pytest -q
+      - name: Run deterministic demo
+        run: python article_demo.py
+
+  cluster-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install pinned k3d and kubectl
+        run: |
+          mkdir -p "${RUNNER_TEMP}/bin"
+          curl -fsSLo "${RUNNER_TEMP}/bin/k3d" https://github.com/k3d-io/k3d/releases/download/v5.9.0/k3d-linux-amd64
+          echo '06d8f25bc3a971c4eb29e0ff08429b180402db0f4dec838c9eac427e296800a0  '"${RUNNER_TEMP}/bin/k3d" | sha256sum -c -
+          curl -fsSLo "${RUNNER_TEMP}/bin/kubectl" https://dl.k8s.io/release/v1.35.5/bin/linux/amd64/kubectl
+          echo '90f75ea6ecc9ea5633262e1c0b83a40560003b30fc94a04cb099404fcef0c224  '"${RUNNER_TEMP}/bin/kubectl" | sha256sum -c -
+          chmod +x "${RUNNER_TEMP}/bin/k3d" "${RUNNER_TEMP}/bin/kubectl"
+          echo "${RUNNER_TEMP}/bin" >> "${GITHUB_PATH}"
+      - name: Run k3d routing smoke
+        run: bash scripts/k3d_smoke.sh
